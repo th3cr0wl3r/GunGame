@@ -1,0 +1,21 @@
+name: GunGame
+main: de.ricosw.gungame.GunGame
+author: ricosw
+version: 1.0
+website: http://ricosw.de
+commands:
+    credits:
+        description: 
+        usage: /<command>
+
+    setlobby:
+        description: 
+        usage: /<command>
+        
+    setpos:
+        description: 
+        usage: /<command>
+        
+    gungame:
+        description: 
+        usage: /<command>

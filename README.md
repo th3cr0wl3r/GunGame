@@ -1,6 +1,6 @@
 GunGame
 =======
-Bukkit Plugin for 1.7 - 1.8
+Bukkit/Spigot Plugin for 1.7 - 1.8
 
 Created by ricosw
 

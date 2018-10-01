@@ -9,150 +9,151 @@ import de.ricosw.gungame.commands.PlayerCommands;
 import de.ricosw.gungame.listener.PlayerListener;
 import de.ricosw.gungame.utils.ConfigManger;
 import de.ricosw.gungame.utils.Utils;
-import java.util.Random;
 import org.bukkit.Bukkit;
+import org.bukkit.command.CommandExecutor;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitTask;
 
 /**
  *
  * @author Rico
  */
-public class GunGame extends JavaPlugin {
+public class GunGame extends JavaPlugin implements Runnable {
+
+  enum State {
+    Waiting,
+    Starting,
+    Playing,
+    Ending
+  }
+
+  private static final int START_COUNTDOWN = 31;
+  private static final int END_COUNTDOWN = 10;
+  
+  private final ConfigManger cfg;
+  private final CommandExecutor commands;
+  private final Listener listener;
+ 
+  private State current;
+  private int countDown;
+
+  public GunGame() {
+    cfg = new ConfigManger();
+    commands = new PlayerCommands(cfg);
+    listener = new PlayerListener(cfg);
+  }
+  
+  @Override
+  public void onEnable() {
+    Utils.reset();
+    Utils.move = true;
+    Utils.pvp = false;
+    current = State.Waiting;
+
+    System.out.println("Plugin by ricosw");
+    System.out.println("(C)opyright by ricosw.de");
+    System.out.println("MOVE: " + Utils.move);
+    System.out.println("PVP: " + Utils.pvp);
     
-    Utils util = new Utils();
+    getServer().getScheduler().runTaskTimer(this, this, 0L, 20L);
 
-    @Override
-    public void onEnable() {
-        util.setMove(false);
-        util.setPvP(true);
-        System.out.println("Plugin by ricosw");
-        System.out.println("(C)opyright by ricosw.de");
-        startTimer();
+    getCommand("credits").setExecutor(commands);
+    getCommand("setLobby").setExecutor(commands);
+    getCommand("setPos").setExecutor(commands);
+    getCommand("gungame").setExecutor(commands);
 
-        getCommand("credits").setExecutor(new PlayerCommands());
-        getCommand("setLobby").setExecutor(new PlayerCommands());
-        getCommand("setPos").setExecutor(new PlayerCommands());
-        getCommand("gungame").setExecutor(new PlayerCommands());
-        
-        getServer().getPluginManager().registerEvents(new PlayerListener(), this);
+    getServer().getPluginManager().registerEvents(listener, this);
+  }
 
-    }
+  @Override
+  public void onDisable() {
+  }
 
-    @Override
-    public void onDisable() {
-    }
+  private void winning(Player p) {
+    Bukkit.broadcastMessage("§6Der Spieler §3" + p.getName() + " §6hatt das Spiel gewonnen!");
 
-    int start = 31; //62
-    int end = 1200;
-    BukkitTask startTimer;
-    BukkitTask endTimer;
-    BukkitTask checkTimer;
+    Utils.pvp = false;
+    Utils.move = false;
+    Utils.reset();
 
-    public void startTimer() {
-        System.out.println("MOVE: " + util.getMove());
-        System.out.println("PVP: " + util.getPvP());
-        startTimer = getServer().getScheduler().runTaskTimer(this, new Runnable() {
+    current = State.Ending;
+    countDown = END_COUNTDOWN;    
+  }
+  
+  @Override
+  public void run() {
+    switch (current) {
+      case Waiting:
+        if (Bukkit.getOnlinePlayers().size() >= 2) {
+          current = State.Starting;
+          countDown = START_COUNTDOWN;
+          Utils.move = false;
+          Utils.pvp = false;
+        }
+        break;
 
-            @Override
-            public void run() {
-                if (Bukkit.getOnlinePlayers().length >= 2) {
-                    start--;
-                    if (start == 60 || start == 30 || start == 10 || start == 5 || start == 4 || start == 3 || start == 2 || start == 1) {
-                        Bukkit.broadcastMessage("§6Spiel startet in §3" + start + " §6Sekunden");
-                        if(start == 6) {
-                            util.setPvP(true);
-                            util.setMove(true);
-                        }
-                        if(start == 5) {
-                            for(Player p : Bukkit.getOnlinePlayers()) {
-                                p.teleport(new ConfigManger().getPos(getRandom(1, 10)));
-                                util.setItems(p, 1);
-                                util.setRanked(p, 1);
-                            }
-                        }
-                        
-                    } else if (start == 0) {
-                        util.setMove(false);
-                        util.setPvP(false);
-                        Bukkit.broadcastMessage("§4Lass die Spiele beginnen!");
-                        startTimer.cancel();
-                        endTimer();
-                        checkWinner();
-                    }
-                }
+      case Starting:
+        switch (countDown--) {
+          case 5:
+            for (Player p : Bukkit.getOnlinePlayers()) {
+              p.teleport(cfg.getPos(Utils.getRandom(1, 10)));
+              Utils.setItems(p, Utils.rerank(p, 1));
             }
-        }, 0L, 20L);
-    }
+          case 30: case 10: case 4: case 3: case 2: case 1:
+            Bukkit.broadcastMessage("§6Spiel startet in §3" + countDown + "§6 Sekunden");
+            break;
+            
+          case 0:
+            Utils.move = true;
+            Utils.pvp = true;
 
-    public void endTimer() {
-        endTimer = getServer().getScheduler().runTaskTimer(this, new Runnable() {
+            Bukkit.broadcastMessage("§4Lass die Spiele beginnen!");
+            current = State.Playing;
+            break;
+        }
+        break;
 
-            @Override
-            public void run() {
-                if (end == 600) {
-                    Bukkit.broadcastMessage("§4Noch 10 Minute(n) bis zum Unentschieden!");
-                } else if (end == 300) {
-                    Bukkit.broadcastMessage("§4Noch 10 Minute(n) bis zum Unentschieden!");
-                } else if (end == 60) {
-                    Bukkit.broadcastMessage("§4Noch 1 Minute(n) bis zum Unentschieden!");
-                } else if (end == 10) {
-                    Bukkit.broadcastMessage("§4Noch 10 Sekunde(n) bis zum Unentschieden!");
-                } else if (end == 5) {
-                    Bukkit.broadcastMessage("§4Es hatt nimmand Gewonnen!\n§4Server startet jetzt neu!");
-                } else if (end == 5) {
-                    for (Player online : Bukkit.getOnlinePlayers()) {
-                        online.kickPlayer("§4Es hatt nimmand Gewonnen!");
-                    }
-                    Bukkit.shutdown();
-                    endTimer.cancel();
-                }
+      case Playing:
+        if (Bukkit.getOnlinePlayers().size() < 2) {
+          Player max = null;
+          for (final Player p : Bukkit.getOnlinePlayers()) {
+            if (max == null) {
+              max = p;
             }
-        }, 0L, 20L);
-    }
-    
-    int checkTimerEnd = 12;
-
-    public void checkWinner() {
-        checkTimer = getServer().getScheduler().runTaskTimer(this, new Runnable() {
-
-            @Override
-            public void run() {
-                for(Player p : Bukkit.getOnlinePlayers()) {
-                    if(util.getRanked(p) == 11) {
-                        Bukkit.broadcastMessage("§6Der Spieler §3" + p.getName() + " §6hatt das Spiel gewonnen!");
-                        util.setRanked(p, 0);
-                        util.setPvP(true);
-                        util.setMove(true);
-                        checkTimerEnd--;
-                    }
-                    
-                    if(util.getRanked(p) == 0) {
-                        checkTimerEnd--;
-                    }
-                    
-                    if(checkTimerEnd == 10) {
-                        Bukkit.broadcastMessage("§4Der Server startet neu!");
-                    }
-                    
-                    if(checkTimerEnd == 5) {
-                        Bukkit.broadcastMessage("§4Der Server startet jetzt neu!");
-                    }
-                    
-                    if(checkTimerEnd == 0) {
-                        p.kickPlayer("Server startet neu!");
-                        Bukkit.shutdown();
-                    }
-                }
-
+            if (Utils.getRank(p) > Utils.getRank(max)) {
+              max = p;
             }
-        }, 0L, 20L);
-    }
+          }
+          if (max == null) {
+            // No Players on Server
+            Bukkit.shutdown();
+            return;
+          }
+          winning(max);
+        }
+        for (final Player p : Bukkit.getOnlinePlayers()) {
+          if (Utils.getRank(p) >= 11) {
+            winning(p);
+          }
+        }
+        break;
 
-    public int getRandom(int lower, int upper) {
-        Random random = new Random();
-        return random.nextInt((upper - lower) + 1) + lower;
+      case Ending:
+        switch (countDown--) {
+          case 10:
+            Bukkit.broadcastMessage("§4Der Server startet neu!");
+            break;
+          case 5:
+            Bukkit.broadcastMessage("§4Der Server startet jetzt neu!");
+            break;
+          case 0:
+            for (final Player p : Bukkit.getOnlinePlayers()) {
+              p.kickPlayer("Server startet neu!");
+            }
+            Bukkit.shutdown();
+        }
+        break;
     }
-
+  }
 }

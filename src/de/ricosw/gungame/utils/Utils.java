@@ -6,6 +6,7 @@
 package de.ricosw.gungame.utils;
 
 import java.util.HashMap;
+import java.util.Random;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -18,66 +19,82 @@ import org.bukkit.potion.PotionEffectType;
  * @author Rico
  */
 public class Utils {
+  
+  private final static Random random = new Random();
+  private static final HashMap<Player, Integer> ranked = new HashMap<>();
+  public static boolean pvp = false;
+  public static boolean move = false;
 
-    private static final HashMap<Player, Integer> ranked = new HashMap<>();
-    private static final HashMap<Integer, Boolean> pvpMode = new HashMap<>();
-    
-    public void setPvP(boolean b) {
-        pvpMode.put(1, b);
-    }
-    
-    public boolean getPvP() {
-        return pvpMode.get(1);
-    }
-    
-    public void setMove(boolean b) {
-        pvpMode.put(2, b);
-    }
-    
-    public boolean getMove() {
-        return pvpMode.get(2);
-    }
-    
-    
+  private Utils() {}
 
-    public void setRanked(Player p, int i) {
-        ranked.put(p, i);
-        p.sendMessage(ChatColor.GOLD + "Dein Level ist jetzt §2" + i);
-        setItems(p, i);
+  public static void reset() {
+    ranked.clear();
+  }
+  
+  public static int rerank(final Player p, final int dif) {
+    ranked.put(p, getRank(p) + dif);
+    return ranked.get(p);
+  }
+  
+  public static int getRank(final Player p) {
+    int currentRank = 0;
+    if (!ranked.containsKey(p)) {
+      currentRank = ranked.get(p);
+    }
+    return currentRank;
+  }
+  
+  public void setRanked(Player p, int i) {
+    ranked.put(p, i);
+    p.sendMessage(ChatColor.GOLD + "Dein Level ist jetzt §2" + i);
+    setItems(p, i);
+  }
+  
+  public static int getRandom(int lower, int upper) {
+    return random.nextInt((upper - lower) + 1) + lower;
+  }
+
+  public static void setItems(Player p, int i) {
+    p.getInventory().clear();
+    switch (i) {
+      case 1:
+        p.getInventory().setItem(0, new ItemStack(Material.WOOD_AXE));
+        p.getInventory().setItem(1, new ItemStack(Material.FISHING_ROD));
+        break;
+      case 2:
+        p.getInventory().setItem(0, new ItemStack(Material.STONE_AXE));
+        p.getInventory().setItem(1, new ItemStack(Material.BOW));
+        p.getInventory().setItem(8, new ItemStack(Material.ARROW, 16));
+        break;
+      case 3:
+        p.getInventory().setItem(0, new ItemStack(Material.BOW));
+        p.getInventory().setItem(1, new ItemStack(Material.ARROW, 64));
+        break;
+      case 4:
+        p.getInventory().setItem(0, new ItemStack(Material.DIAMOND_AXE));
+        p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 120, 120, false));
+        break;
+      case 5:
+        p.getInventory().setItem(0, new ItemStack(Material.STICK));
+        break;
+      case 6:
+        p.getInventory().setItem(0, new ItemStack(Material.DIAMOND_SWORD));
+        break;
+      case 7:
+        p.getInventory().setItem(0, new ItemStack(Material.POTATO_ITEM));
+        break;
+      case 8:
+        p.getInventory().setItem(0, new ItemStack(Material.BAKED_POTATO));
+        break;
+      case 9:
+        p.getInventory().setItem(0, new ItemStack(Material.ANVIL));
+        break;
+      case 10:
+        p.getInventory().setItem(0, new ItemStack(Material.ROTTEN_FLESH));
+        break;
+      default:
+        break;
     }
 
-    public int getRanked(Player p) {
-        return ranked.get(p);
-    }
-
-    public void setItems(Player p, int i) {
-        p.getInventory().clear();
-        if (i == 1) {
-            p.getInventory().setItem(0, new ItemStack(Material.WOOD_AXE));
-            p.getInventory().setItem(1, new ItemStack(Material.FISHING_ROD));
-        } else if (i == 2) {
-            p.getInventory().setItem(0, new ItemStack(Material.STONE_AXE));
-            p.getInventory().setItem(1, new ItemStack(Material.BOW));
-            p.getInventory().setItem(8, new ItemStack(Material.ARROW, 16));
-        } else if (i == 3) {
-            p.getInventory().setItem(0, new ItemStack(Material.BOW));
-            p.getInventory().setItem(1, new ItemStack(Material.ARROW, 64));
-        } else if (i == 4) {
-            p.getInventory().setItem(0, new ItemStack(Material.DIAMOND_AXE));
-            p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 120, 120, false));
-        } else if (i == 5) {
-            p.getInventory().setItem(0, new ItemStack(Material.STICK));
-        } else if (i == 6) {
-            p.getInventory().setItem(0, new ItemStack(Material.DIAMOND_SWORD));
-        } else if (i == 7) {
-            p.getInventory().setItem(0, new ItemStack(Material.POTATO_ITEM));
-        } else if (i == 8) {
-            p.getInventory().setItem(0, new ItemStack(Material.BAKED_POTATO));
-        } else if (i == 9) {
-            p.getInventory().setItem(0, new ItemStack(Material.ANVIL));
-        } else if (i == 10) {
-            p.getInventory().setItem(0, new ItemStack(Material.ROTTEN_FLESH));
-        }
-
-    }
+  }
 }

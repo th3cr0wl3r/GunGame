@@ -6,8 +6,7 @@
 package de.ricosw.gungame.commands;
 
 import de.ricosw.gungame.utils.ConfigManger;
-import de.ricosw.gungame.utils.Utils;
-import net.md_5.bungee.api.ChatColor;
+import static org.bukkit.ChatColor.*;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -18,49 +17,67 @@ import org.bukkit.entity.Player;
  * @author Rico
  */
 public class PlayerCommands implements CommandExecutor {
-    
-    Utils util = new Utils();
 
-    @Override
-    public boolean onCommand(CommandSender sender, Command cmd, String string, String[] args) {
-        Player p = (Player) sender;
-        ConfigManger cfg = new ConfigManger();
+  enum GunGameCommand {
+    Gungame,
+    SetLobby,
+    Credits,
+    SetPos;
 
-        if (cmd.getName().equalsIgnoreCase("credits")) {
-            p.sendMessage(ChatColor.RED + "Plugin Programmiert von ricosw");
-            p.sendMessage(ChatColor.AQUA + "Dies ist ein Tutorial Plugin!");
-            p.sendMessage(ChatColor.GRAY + "http://youtube.com/RicoswLive");
+    static GunGameCommand find(final Command cmd) {
+      for (GunGameCommand ggcmd : values()) {
+        if (ggcmd.name().equalsIgnoreCase(cmd.getName())) {
+          return ggcmd;
         }
-
-        if (cmd.getName().equalsIgnoreCase("gungame")) {
-            if (cfg.getLobbySeted() && cfg.getPosSeted()) {
-                p.sendMessage(ChatColor.GREEN + "Alles Funktioniert und wurde richtig gesetzt!");
-            } else if (cfg.getLobbySeted() == false) {
-                p.sendMessage("§4Die Lobby wurde nicht gesetzt!");
-
-            } else if (cfg.getPosSeted() == false) {
-                p.sendMessage("§4Die Positionen wurde nicht gesetzt!");
-            }
-        }
-
-        if (cmd.getName().equalsIgnoreCase("setLobby")) {
-            if (p.hasPermission("gungame.*")) {
-                cfg.setLobby(p.getLocation());
-                p.sendMessage("§4Die Lobby wurde gesetzt!");
-                cfg.setLobbySeted();
-            }
-        }
-
-        if (cmd.getName().equalsIgnoreCase("setPos")) {
-            if (p.hasPermission("gungame.*")) {
-                cfg.setPos(p.getLocation(), Integer.parseInt(args[0]));
-                p.sendMessage("§4Die Position " + args[0] + " wurde gesetzt!");
-                cfg.setPosSeted();
-
-            }
-        }
-
-        return true;
+      }
+      return null;
     }
+  }
+
+  private final ConfigManger cfg;
+
+  public PlayerCommands(ConfigManger cfg) {
+    this.cfg = cfg;
+  }
+
+  @Override
+  public boolean onCommand(CommandSender sender, Command cmd, String string, String[] args) {
+    final Player p = (Player) sender;
+    final GunGameCommand ggcmd = GunGameCommand.find(cmd);
+
+    switch (ggcmd) {
+      case Credits:
+        p.sendMessage(RED + "Plugin Programmiert von ricosw");
+        p.sendMessage(AQUA + "Dies ist ein Tutorial Plugin!");
+        p.sendMessage(GRAY + "http://youtube.com/RicoswLive");
+        break;
+
+      case Gungame:
+        if (cfg.isLobbySet() && cfg.isPosSet()) {
+          p.sendMessage(GREEN + "Alles Funktioniert und wurde richtig gesetzt!");
+        } else if (!cfg.isLobbySet()) {
+          p.sendMessage("§4Die Lobby wurde nicht gesetzt!");
+        } else if (!cfg.isPosSet()) {
+          p.sendMessage("§4Die Positionen wurde nicht gesetzt!");
+        }
+        break;
+
+      case SetLobby:
+        if (p.hasPermission("gungame.*")) {
+          cfg.setLobby(p.getLocation());
+          p.sendMessage("§4Die Lobby wurde gesetzt!");
+        }
+        break;
+
+      case SetPos:
+        if (p.hasPermission("gungame.*")) {
+          cfg.setPos(p.getLocation(), Integer.parseInt(args[0]));
+          p.sendMessage("§4Die Position " + args[0] + " wurde gesetzt!");
+        }
+        break;
+    }
+
+    return true;
+  }
 
 }

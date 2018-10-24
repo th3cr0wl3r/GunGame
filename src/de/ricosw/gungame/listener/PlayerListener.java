@@ -35,8 +35,8 @@ public class PlayerListener implements Listener {
   @EventHandler
   public void onJoin(PlayerJoinEvent e) {
     final Player p = e.getPlayer();
-    p.sendMessage(AQUA + "Viel Spaß beim Spielen!");
-    e.setJoinMessage(String.format("%sDer Spieler %s%s%s ist dem Spiel beigetreten!", GRAY, AQUA, p.getName(), GRAY));
+    //p.sendMessage(AQUA + "Viel Spaß beim Spielen!");
+    //e.setJoinMessage(String.format("%sDer Spieler %s%s%s ist dem Spiel beigetreten!", GRAY, AQUA, p.getName(), GRAY));
   }
 
   @EventHandler

@@ -5,11 +5,9 @@
  */
 package de.ricosw.gungame.listener;
 
-import de.ricosw.gungame.GunGame;
 import de.ricosw.gungame.utils.ConfigManger;
 import de.ricosw.gungame.utils.Utils;
-import java.util.Random;
-import org.bukkit.ChatColor;
+import static org.bukkit.ChatColor.*;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -17,7 +15,6 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
@@ -28,42 +25,37 @@ import org.bukkit.event.player.PlayerRespawnEvent;
  */
 public class PlayerListener implements Listener {
 
-    Utils util = new Utils();
-    ConfigManger cfg = new ConfigManger();
+  private final ConfigManger cfg;
 
-    @EventHandler
-    public void onJoin(PlayerJoinEvent e) {
-        Player p = e.getPlayer();
-        p.sendMessage(ChatColor.AQUA + "Viel Spaß beim Spielen!");
-        e.setJoinMessage(ChatColor.GRAY + "Der Spieler " + ChatColor.AQUA + p.getName() + ChatColor.GRAY + " ist dem Spiel beigetreten!");
+  public PlayerListener(ConfigManger cfg) {
+    this.cfg = cfg;
+  }
+  
+  
+  @EventHandler
+  public void onJoin(PlayerJoinEvent e) {
+    final Player p = e.getPlayer();
+    p.sendMessage(AQUA + "Viel Spaß beim Spielen!");
+    e.setJoinMessage(String.format("%sDer Spieler %s%s%s ist dem Spiel beigetreten!", GRAY, AQUA, p.getName(), GRAY));
+  }
+
+  @EventHandler
+  public void onDeath(PlayerDeathEvent e) {
+    e.getDrops().clear();
+    final Player player = e.getEntity().getPlayer();
+    final Player killer = e.getEntity().getKiller();
+    if (killer instanceof Player) {
+      e.setDeathMessage(String.format("%sDer Spieler §6%s§7 wurde von §6%s§7 getötet!", GRAY, player.getName(), killer.getName()));
+      player.sendMessage(RED + "Du bist gestorben!");
+      killer.sendMessage(GOLD + "Dein Level ist jetzt §2" + Utils.rerank(killer, 1));
+    } else {
+      e.setDeathMessage(String.format("%sDer Spielder §6%s§7 ist gestorben!", GRAY, player.getName()));
     }
 
-    @EventHandler
-    public void onDeath(PlayerDeathEvent e) {
-        e.getDrops().clear();
-        Player player = e.getEntity().getPlayer();
-        Player killer = e.getEntity().getKiller();
-        if (killer instanceof Player) {
-            e.setDeathMessage(ChatColor.GRAY + "Der Spieler §6" + player.getName() + " §7wurde von §6" + killer.getName() + " §7getötet!");
-            player.sendMessage(ChatColor.RED + "Du bist gestorben!");
-            util.setRanked(killer, util.getRanked(killer) + 1);
-        } else {
-            e.setDeathMessage(ChatColor.GRAY + "Der Spieler §6" + player.getName() + " §7ist gestorben!");
-        }
-
-        if (util.getRanked(player) != 1) {
-            util.setRanked(player, util.getRanked(player) - 1);
-        }
+    if (Utils.getRank(player) != 1) {
+      killer.sendMessage(GOLD + "Dein Level ist jetzt §2" + Utils.rerank(player, -1));
     }
 
-    @EventHandler
-    public void onRespawn(PlayerRespawnEvent e) {
-        int i = getRandom(1, 10);
-
-        e.setRespawnLocation(cfg.getPos(i));
-        e.getPlayer().teleport(cfg.getPos(i));
-        util.setItems(e.getPlayer(), util.getRanked(e.getPlayer()));
-    }
 /*
 Isomman hukkaan toi jos ilmassa. Niita ilman tasta sai kynan oikea vie sanot. Ole paikkaan sahvoori tuulella olisihan toivoisi puolemme ota luo osa. Ne nakoinen loistoja et syotavaa herrakin te. Ero aittanne kullakin itseanne toi taakseen tai ajattele pitkalla. Hanella et en hyllyen se puoleen poikana me. Ne ei eihan malja siina minun ai. Taikka en suuret samoin on vieras lautta ei. Pysyn et tieda ne tytto jalat enhan. 
 */
@@ -74,25 +66,34 @@ Isomman hukkaan toi jos ilmassa. Niita ilman tasta sai kynan oikea vie sanot. Ol
         }
     }
 
-    @EventHandler
-    public void onPvP(EntityDamageByEntityEvent e) {
-        if(util.getPvP()) {
-            e.setCancelled(true);
-        }
-    }
+    e.setRespawnLocation(cfg.getPos(i));
+    e.getPlayer().teleport(cfg.getPos(i));
     
-    @EventHandler
-    public void onBuild(BlockBreakEvent e) {
-        e.setCancelled(true);
-    }
-    
-    @EventHandler
-    public void onDestroy(BlockPlaceEvent e) {
-        e.setCancelled(true);
-    }
+    Utils.setItems(e.getPlayer(), Utils.getRank(e.getPlayer()));
+  }
 
-    public int getRandom(int lower, int upper) {
-        Random random = new Random();
-        return random.nextInt((upper - lower) + 1) + lower;
+  @EventHandler
+  public void onMove(PlayerMoveEvent e) {
+    if (!Utils.move) {
+      e.setCancelled(true);
     }
+  }
+
+  @EventHandler
+  public void onPvP(EntityDamageByEntityEvent e) {
+    if (!Utils.pvp) {
+      e.setCancelled(true);
+    }
+  }
+
+  @EventHandler
+  public void onBuild(BlockBreakEvent e) {
+    e.setCancelled(true);
+  }
+
+  @EventHandler
+  public void onDestroy(BlockPlaceEvent e) {
+    e.setCancelled(true);
+  }
+
 }

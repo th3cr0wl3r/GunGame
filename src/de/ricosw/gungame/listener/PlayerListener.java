@@ -64,7 +64,9 @@ public class PlayerListener implements Listener {
         e.getPlayer().teleport(cfg.getPos(i));
         util.setItems(e.getPlayer(), util.getRanked(e.getPlayer()));
     }
-
+/*
+Isomman hukkaan toi jos ilmassa. Niita ilman tasta sai kynan oikea vie sanot. Ole paikkaan sahvoori tuulella olisihan toivoisi puolemme ota luo osa. Ne nakoinen loistoja et syotavaa herrakin te. Ero aittanne kullakin itseanne toi taakseen tai ajattele pitkalla. Hanella et en hyllyen se puoleen poikana me. Ne ei eihan malja siina minun ai. Taikka en suuret samoin on vieras lautta ei. Pysyn et tieda ne tytto jalat enhan. 
+*/
     @EventHandler
     public void onMove(PlayerMoveEvent e) {
         if(util.getMove()) {
